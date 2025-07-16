@@ -1,98 +1,114 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
-const USDtoEURO float64 = 0.86
-const USDtoRUB float64 = 77.89
-const RUBtoUSD float64 = 0.013
-const RUBtoEURO float64 = 0.011
-const EUROtoUSD float64 = 1.16
-const EUROtoRUB float64 = 91.15
-
-func getInputCurrency() string {
-	var inputCurrency string
-	fmt.Print("Введите исходную валюту (USD, EURO, RUB): ")
+func getUserOperation() string {
+	var operation string
+	fmt.Print("Введите операцию, которую хотите выполнить (AVG, SUM, MED): ")
 	for {
-		fmt.Scan(&inputCurrency)
+		fmt.Scan(&operation)
 
-		if inputCurrency == "RUB" || inputCurrency == "USD" || inputCurrency == "EURO" {
-			return inputCurrency
+		if operation == "AVG" || operation == "SUM" || operation == "MED" {
+			return operation
 		}
-		fmt.Print("Неверно выбрана валюта\nВведите заново: ")
+		fmt.Print("Такой операции нет\nВведите заново: ")
 	}
 }
 
-func getOutputCurrency(inputCurrency string) string {
-	var outputCurrency string
-	for {
-		if inputCurrency == "RUB" {
-			fmt.Print("Введите целевую валюту (USD, EURO): ")
-			fmt.Scan(&outputCurrency)
-			if outputCurrency == "USD" || outputCurrency == "EURO" {
-				return outputCurrency
-			}
-		} else if inputCurrency == "USD" {
-			fmt.Print("Введите целевую валюту (RUB, EURO): ")
-			fmt.Scan(&outputCurrency)
-			if outputCurrency == "RUB" || outputCurrency == "EURO" {
-				return outputCurrency
-			}
-		} else if inputCurrency == "EURO" {
-			fmt.Print("Введите целевую валюту (USD, RUB): ")
-			fmt.Scan(&outputCurrency)
-			if outputCurrency == "USD" || outputCurrency == "RUB" {
-				return outputCurrency
-			}
-		}
+// func sliceFill(array []int) []int {
+//   var n int
+//   var choice string
+//   fmt.Println("Заполнение массива")
+//   for choice != "n" {
+//     fmt.Print("Введите число: ")
+//     fmt.Scan(&n)
+//     array = append(array, n)
+
+//     fmt.Print("Продолжить? y/n ")
+//     fmt.Scan(&choice)
+//     if choice != "y" && choice != "n" {
+//       fmt.Print("Неправильная команда, введите еще раз: ")
+//       fmt.Scan(&choice)
+//     }
+//   }
+//   return array
+// }
+
+func getUserInput() string {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("Введите последовательность целых чисел через запятую: ")
+	var cleanBuffer string
+	fmt.Scanln(&cleanBuffer)
+	_ = scanner.Scan()
+	if len(scanner.Text()) == 0 {
+		return "0"
 	}
+	return scanner.Text()
 }
 
-func getQuantity() float64 {
-	var inputCurrencyQuantity float64
-	for {
-		fmt.Print("Введите количество исходной валюты: ")
-		_, err := fmt.Scan(&inputCurrencyQuantity)
-		if err != nil {
-			fmt.Println("Ошибка: введено не число! Введите количество заново")
-			var discard string
-			fmt.Scanln(&discard)
+func stringToArray(s string) []int {
+	var array []int
+	parts := strings.Split(s, ",")
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed == "" {
 			continue
-		} else {
-			return inputCurrencyQuantity
 		}
+		if n, err := strconv.Atoi(trimmed); err == nil {
+			array = append(array, n)
+		}
+	}
+
+	return array
+}
+
+func sumArray(array []int) float64 {
+	var sum int
+	for i := 0; i < len(array); i++ {
+		sum += array[i]
+	}
+
+	return float64(sum)
+}
+
+func medArray(array []int) float64 {
+	for i := 0; i < len(array); i++ {
+		for j := i + 1; j < len(array); j++ {
+			if array[i] > array[j] {
+				array[i], array[j] = array[j], array[i]
+			}
+		}
+	}
+
+	mid := len(array) / 2
+	if len(array)%2 != 0 {
+		return float64(array[mid])
+	} else {
+		return float64(array[mid-1]+array[mid]) / 2
 	}
 }
 
-func calculate(currency1 string, currency2 string, quantity float64) float64 {
-	fmt.Println("Конвертация из", currency1, "в", currency2)
-
-	if currency1 == "USD" && currency2 == "EURO" {
-		return USDtoEURO * quantity
-	} else if currency1 == "USD" && currency2 == "RUB" {
-		return USDtoRUB * quantity
-	}
-
-	if currency1 == "RUB" && currency2 == "USD" {
-		return RUBtoUSD * quantity
-	} else if currency1 == "RUB" && currency2 == "EURO" {
-		return RUBtoEURO * quantity
-	}
-
-	if currency1 == "EURO" && currency2 == "RUB" {
-		return EUROtoRUB * quantity
-	} else if currency1 == "EURO" && currency2 == "USD" {
-		return EUROtoUSD * quantity
+func opOnArray(operation string, array []int) float64 {
+	if operation == "AVG" {
+		return sumArray(array) / float64(len(array))
+	} else if operation == "SUM" {
+		return sumArray(array)
 	} else {
-		return 0
+		return medArray(array)
 	}
 }
 
 func main() {
-	inputCurrency := getInputCurrency()
-	outputCurrency := getOutputCurrency(inputCurrency)
-
-	result := calculate(inputCurrency, outputCurrency, getQuantity())
-	fmt.Print(result)
+	operation := getUserOperation()
+	userStr := getUserInput()
+	slice := stringToArray(userStr)
+	result := opOnArray(operation, slice)
+	fmt.Println(result)
 }
