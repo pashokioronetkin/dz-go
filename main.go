@@ -4,12 +4,12 @@ import (
 	"fmt"
 )
 
-const USDtoEURO float64 = 0.86
-const USDtoRUB float64 = 77.89
-const RUBtoUSD float64 = 0.013
-const RUBtoEURO float64 = 0.011
-const EUROtoUSD float64 = 1.16
-const EUROtoRUB float64 = 91.15
+// const USDtoEURO float64 = 0.86
+// const USDtoRUB float64 = 77.89
+// const RUBtoUSD float64 = 0.013
+// const RUBtoEURO float64 = 0.011
+// const EUROtoUSD float64 = 1.16
+// const EUROtoRUB float64 = 91.15
 
 func getInputCurrency() string {
 	var inputCurrency string
@@ -65,34 +65,31 @@ func getQuantity() float64 {
 	}
 }
 
-func calculate(currency1 string, currency2 string, quantity float64) float64 {
+func calculate(currencyMap map[string]float64, currency1 string, currency2 string, quantity float64) float64 {
 	fmt.Println("Конвертация из", currency1, "в", currency2)
 
-	if currency1 == "USD" && currency2 == "EURO" {
-		return USDtoEURO * quantity
-	} else if currency1 == "USD" && currency2 == "RUB" {
-		return USDtoRUB * quantity
-	}
-
-	if currency1 == "RUB" && currency2 == "USD" {
-		return RUBtoUSD * quantity
-	} else if currency1 == "RUB" && currency2 == "EURO" {
-		return RUBtoEURO * quantity
-	}
-
-	if currency1 == "EURO" && currency2 == "RUB" {
-		return EUROtoRUB * quantity
-	} else if currency1 == "EURO" && currency2 == "USD" {
-		return EUROtoUSD * quantity
-	} else {
+	key := currency1 + "to" + currency2
+	rate, exists := currencyMap[key]
+	if !exists {
 		return 0
 	}
+
+	return rate * quantity
 }
 
 func main() {
+	currencyMap := map[string]float64{
+		"USDtoEURO": 0.86,
+		"USDtoRUB":  77.89,
+		"RUBtoUSD":  0.013,
+		"RUBtoEURO": 0.011,
+		"EUROtoUSD": 1.16,
+		"EUROtoRUB": 91.15,
+	}
+
 	inputCurrency := getInputCurrency()
 	outputCurrency := getOutputCurrency(inputCurrency)
 
-	result := calculate(inputCurrency, outputCurrency, getQuantity())
+	result := calculate(currencyMap, inputCurrency, outputCurrency, getQuantity())
 	fmt.Print(result)
 }
